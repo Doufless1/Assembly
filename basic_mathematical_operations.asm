@@ -1,7 +1,7 @@
 section .bss
 number1 resd 10 ; we reserve only for 4 bytes for the integer
 number2 resd 10
-result resd 1 
+operator resd 1 
 resultBuffer resd 20; here as well
 
 section .data
