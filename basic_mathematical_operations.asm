@@ -2,22 +2,92 @@ section .bss
 number1 resd 10 ; we reserve only for 4 bytes for the integer
 number2 resd 10
 operator resd 1 
+flushing_new_line resd 1
 resultBuffer resd 20; here as well
 
 section .data
+
+operator_message db "Enter an operator (+, -, *, /):", 0xA
+    operator_len equ $ - operator_message
+
+
  message1 db "Insert The First Positive Number:", 0xA
  message1Len equ $ - message1
 
  message2 db "Insert The Second Positivie Number:", 0xA
  message2Len equ $ - message2
 
- message3 db "The Sum of the Two Number is:"
+ message3 db "The Solution of the Two Number is:"
  message3Len equ $ - message3
+
+
+ error_message_cant_divid_0 db "You Cant Divide with 0!!!!", 0xA
+ error_message_cant_divid_0_Len equ $ - error_message_cant_divid_0
+
+ 
+ wrong_user_input db "You Made Wrong User Input From The Given Examples. Try Again!!!", 0xA
+ wrong_user_input_Len equ $ - wrong_user_input
+
 
 section .text
 global _start
 
 _start:
+    mov rax, 1                
+    mov rdi, 1                
+    mov rsi, operator_message  
+    mov rdx, operator_len     
+    syscall
+
+
+
+
+    mov rax, 0               
+    mov rdi, 0                
+    mov rsi, operator         
+    mov rdx, 1                
+    syscall
+
+   mov rax, 0                
+    mov rdi, 0
+    mov rsi, flushing_new_line 
+    mov rdx, 1                
+    syscall
+
+    
+    mov al, byte [operator]    
+    cmp al, '+'                
+    je continue_execution
+    cmp al, '-'                
+    je continue_execution
+    cmp al, '*'                
+    je continue_execution
+    cmp al, '/'                
+    je continue_execution
+
+    
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, wrong_user_input  
+    mov rdx, wrong_user_input_Len 
+    syscall
+
+    
+flush_input:
+    mov rax, 0                
+    mov rdi, 0
+    mov rsi, flushing_new_line 
+    mov rdx, 1                
+    syscall
+    cmp byte [flushing_new_line], 0x0A ; this checks for a new line so it properly clears the user input so we dont get a repeating erorr message with the asking for input 
+    ; for example if u put adada its gonna handle each of this wrong inputs individaully
+    jne flush_input            
+
+    
+    jmp _start
+
+continue_execution:
+
 mov rax, 1
 mov rdi, 1
 mov rsi, message1
@@ -54,9 +124,20 @@ mov rsi,number2
 mov rax, 0 
 call loop_for_adding_the_numbers 
 
-add rax,rbx
+push rax
+mov al,byte [operator]
+cmp al, '+'
+je perform_adddition
+cmp al, '-'
+je perform_substraction
+cmp al, '*'
+je perform_multiplication
+cmp al, '/'
+je perform_division
 
 
+
+prepare_result:
 mov rsi,resultBuffer ; set resultBuffer so after we finish with make_it_ASCII everything is inside him
 call make_it_ASCII
 
@@ -79,13 +160,58 @@ syscall
 
 jmp return_0
 
-mov rax, 1
-mov rdi, 1
-mov rsi, resultBuffer
-mov rdx, 20
-syscall
 
-jmp return_0
+
+
+perform_adddition:
+mov rax, 0
+pop rax
+add rax,rbx
+jmp prepare_result
+
+
+perform_substraction:
+mov rax, 0
+pop rax 
+cmp rax, rbx
+jl handle_negative_numbers
+sub rax,rbx
+jmp prepare_result
+
+
+handle_negative_numbers:
+sub rax, rbx
+neg rax
+mov byte [resultBuffer],'-' ; we add - to the buffer 
+inc rsi ; so it can point to the number
+jmp prepare_result
+
+
+perform_multiplication:
+mov rax, 0
+pop rax
+imul rax,rbx
+jmp prepare_result
+
+perform_division:
+mov rdx, 0
+mov rax, 0
+pop rax
+cmp rbx, 0
+je error_message_cant_divid_null
+cmp rax, 0
+je error_message_cant_divid_null
+cmp rax , rbx ; i am trying as example rax = 1 rbx = 2 it probably wont work for more complicated numbers
+jl convert_loop_for_decimal_points
+div rbx
+jmp prepare_result
+
+
+convert_loop_for_decimal_points:
+imul rax, rax, 10 ; we multiple it like this because we want the divison so its going to be like rax = 1*10=10 if rax was one before
+div rbx
+mov byte [resultBuffer + 1], '.'
+jmp prepare_result
 
 
 loop_for_adding_the_numbers:
@@ -129,3 +255,15 @@ jmp convert_loop
 done: 
 inc rsi ; after we reverse it we point to the most significant bit again
 ret
+
+error_message_cant_divid_null:
+mov rax,1
+mov rdi, 1
+mov rsi, error_message_cant_divid_0
+mov rdx, error_message_cant_divid_0_Len
+syscall
+
+jmp return_0
+
+
+
