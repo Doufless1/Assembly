@@ -28,11 +28,16 @@ operator_message db "Enter an operator (+, -, *, /):", 0xA
  wrong_user_input db "You Made Wrong User Input From The Given Examples. Try Again!!!", 0xA
  wrong_user_input_Len equ $ - wrong_user_input
 
+zero db "0"
+zero_Len equ $ - zero
 
 section .text
 global _start
 
 _start:
+mov r9, 10 ; so if u ask why i put htis here is beause of the make it ascii funciton
+; if u keep it and it dosent update and there is second left over it overwrite the first one 
+; thats why we need it kinda like a global variable
     mov rax, 1                
     mov rdi, 1                
     mov rsi, operator_message  
@@ -200,17 +205,61 @@ pop rax
 cmp rbx, 0
 je error_message_cant_divid_null
 cmp rax, 0
-je error_message_cant_divid_null
+je zero_divided_by_something_is_zero
 cmp rax , rbx ; i am trying as example rax = 1 rbx = 2 it probably wont work for more complicated numbers
 jl convert_loop_for_decimal_points
+
 div rbx
-jmp prepare_result
+push rdx
+cmp rdx, 0
+je prepare_result
+call make_it_ASCII
+lea rsi, [rsi + r11]
+mov byte [rsi], '.'
+lea rsi, [rsi + 1]
+pop rdx
+jmp get_the_decimal_part 
+
+
+
+get_the_decimal_part:
+cmp r15,4 ; if u ask this is for precision points when u have numbers like 70/3 which is equal to 23.3333 if u dont put it it goes into infinet loop
+je prepare_result_for_decimal_points
+mov rax, rdx
+mov rdx, 0
+imul rax,rax,10
+div rbx
+push rdx
+call make_it_ASCII_for_DECIMAL
+pop rdx
+inc r15
+cmp rdx, 0
+jne get_the_decimal_part
+jmp prepare_result_for_decimal_points
+
+
+prepare_result_for_decimal_points:
+lea rsi, [resultBuffer]
+mov rax,1
+mov rdi,1
+mov rsi,message3
+mov rdx,message3Len
+syscall
+
+mov rax,1
+mov rdi,1
+mov rsi,resultBuffer
+mov rdx,20
+syscall
+
+jmp return_0
+
 
 
 convert_loop_for_decimal_points:
-imul rax, rax, 10 ; we multiple it like this because we want the divison so its going to be like rax = 1*10=10 if rax was one before
+imul rax, rax, 10000 ; we multiple it like this because we want the divison so its going to be like rax = 1*10=10 if rax was one before
 div rbx
-mov byte [resultBuffer + 1], '.'
+mov byte [resultBuffer], '.'
 jmp prepare_result
 
 
@@ -235,11 +284,10 @@ ret
 
 
 make_it_ASCII:
+mov r11, 4
 mov rdx,0
 mov rcx, 10
-mov rsi, resultBuffer ; here we want the address of the resultBuffer so we can point to him
-add rsi,19
-
+lea rsi, [resultBuffer + r11]
 
 convert_loop:
 test rax, rax
@@ -249,12 +297,34 @@ add dl, '0' ;Wait a bit explanationg here. So rdx register is a 64 bit register 
 mov [rsi], dl ; btw this is like saying &rsi because rsi is a pointer to the address of some variable this way u save it inside rsi.
 dec rsi, ; we move the pointer backwards so we can store them accordingly 
 ; for example if we have 123 and we start diving it its gonna be rdx = 3 then rdx = 2 then rdx = 1 it starts from least to most significant digit thats why we need to reverse it like this
+inc r11
 mov rdx, 0
 jmp convert_loop
 
 done: 
 inc rsi ; after we reverse it we point to the most significant bit again
 ret
+
+
+make_it_ASCII_for_DECIMAL:
+mov rdx,0
+mov rcx, 10
+lea rsi, [resultBuffer + r9]
+
+
+convert_loop_for_DECIMAL:
+cmp r8, 5
+je done ; btw this is if they are equal
+div rcx
+add dl, '0' ;Wait a bit explanationg here. So rdx register is a 64 bit register it has dl lowest 8 bit, dh highest 8 bit dx for 16 for lowest i think it was btw it combines dl + dh. in linux x84-64 and here we want ONLY THE REMAINDER REMEMBER THIS. So if we need only the remainder we need the lowest bits of the register. If u ask why we dont use rdx then its because if we everytime we divide it rdx may contain left over data from the previous division and it can lead to crashes or undefined behaviour but I think this way we cant handle more then a couple of numbers liek I think the max is 5?
+mov [rsi], dl ; btw this is like saying &rsi because rsi is a pointer to the address of some variable this way u save it inside rsi.
+dec rsi, ; we move the pointer backwards so we can store them accordingly 
+; for example if we have 123 and we start diving it its gonna be rdx = 3 then rdx = 2 then rdx = 1 it starts from least to most significant digit thats why we need to reverse it like this
+inc r9
+inc r8
+mov rdx, 0
+jmp convert_loop
+
 
 error_message_cant_divid_null:
 mov rax,1
@@ -267,3 +337,18 @@ jmp return_0
 
 
 
+zero_divided_by_something_is_zero:
+
+mov rax,1
+mov rdi,1
+mov rsi,message3
+mov rdx,message3Len
+syscall
+
+mov rax,1
+mov rdi, 1
+mov rsi, zero
+mov rdx, zero_Len
+syscall
+
+jmp return_0
