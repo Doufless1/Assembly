@@ -14,6 +14,7 @@ section .data
     invalidLen equ $ - invalidString
     divide0String DB "You cannot divide by zero!", NEWLINE
     divide0Len equ $ - divide0String
+    minusChar DB '-'
 
 section .bss
     num1 resd 10
@@ -184,26 +185,45 @@ division:
         jmp exit
 
 ascii_to_int:
-    xor rax, rax
-    xor rcx, rcx
-    .convert_loop:
-        movzx rcx, byte [rsi]
-        cmp rcx, NEWLINE
-        je .finish
-        sub rcx, '0'
-        imul rax, rax, 10
-        add rax, rcx
-        inc rsi
-        jmp .convert_loop
+    xor     rax, rax        ; Clear accumulator
+    xor     r8, r8          ; Clear sign flag (0 = positive, 1 = negative)
 
-    .finish:
-    ret
+    ; Check if the first character is a negative sign.
+    mov     bl, byte [rsi]
+    cmp     bl, '-'         
+    jne     .convert_digits ; If not '-', continue conversion as positive
+    ; Found a '-', mark number as negative.
+    mov     r8, 1           
+    inc     rsi             ; Skip the '-' character
+
+.convert_digits:
+    xor     rcx, rcx
+
+.convert_loop:
+    movzx rcx, byte [rsi]
+    cmp rcx, NEWLINE
+    je .finish
+    sub rcx, '0'
+    imul rax, rax, 10
+    add rax, rcx
+    inc rsi
+    jmp .convert_loop
+
+
+.finish:
+    cmp   r8, 0
+    je   .done
+    neg   rax
+.done:
+ret
 
 print_result:
     mov rbx, 10
     xor rsi, rsi
     xor r8, r8
-    mov r8, 0
+    cmp rax, 0
+    jge .reverse_loop
+    call do_neg
     .reverse_loop:
         xor rdx, rdx
         div rbx
@@ -266,5 +286,23 @@ exit:
     mov rax, EXIT
     xor rdi, EXIT_CODE
     syscall
+
+    ret
+
+
+do_neg:
+    ; Save the negative value
+    push rax             ; save original negative value
+
+    ; Print the '-' character
+    mov     rax, 1       ; sys_write
+    mov     rdi, 1       ; stdout file descriptor
+    mov     rsi, minusChar  ; pointer to '-' character
+    mov     rdx, 1       ; length = 1
+    syscall
+
+    ; Restore the original value and convert it to positive
+    pop     rax          ; restore the negative value
+    neg     rax          ; now rax is the positive equivalent
 
     ret
