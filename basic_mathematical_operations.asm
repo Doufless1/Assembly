@@ -3,7 +3,7 @@ number1 resd 10 ; we reserve only for 4 bytes for the integer
 number2 resd 10
 operator resd 1 
 flushing_new_line resd 1
-resultBuffer resd 20; here as well
+resultBuffer resd 70; here as well
 
 section .data
 

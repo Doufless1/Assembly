@@ -8,7 +8,7 @@ section .data
     stringLen1 equ $ - InputString1
     InputString2 DB "Enter the second number", NEWLINE
     stringLen2 equ $ - InputString2
-    operatorString DB "Enter opetator (+ - * /)"
+    operatorString DB "Enter opetator (+ - * / ~)"
     operatorLen equ $ - operatorString
     invalidString DB "Invalid answer, please enter apropiate inputs", NEWLINE
     invalidLen equ $ - invalidString
@@ -92,7 +92,80 @@ section .text
         cmp byte[operator], '/'
         je division
 
+        cmp byte[operator], '~'
+        je square_root
+
         jmp invalid_input
+
+
+   square_root:
+    mov r15, 0         ; Start with x = 0
+    mov rbx, 1         ; Step = 1
+    mov rcx, [num1]    ; Load num1 into rcx
+
+.square_loop:
+    mov rax, 0
+    mov rax, r15
+    imul rax, rax
+    mov rdx, rax ; rdx = rax * rax
+    cmp rdx, rcx       ; Compare x^2 with num1
+    je .found_root     ; Exact match found
+    ja .done_root      ; If x^2 > num1, overshot
+
+    add r15, rbx       ; Increment x
+    jmp .square_loop
+
+.done_root:
+    sub rax, rbx       ; Floor approximation of square root
+    mov r8, 0          ; Counter for fractional steps (tenths)
+    mov r9, 10         ; We refine in steps of 0.1
+    mov rdx, 0         ; Clear remainder
+
+.fractional_loop:
+    add rax, 1         ; Increment rax (equivalent to adding 0.1)
+    imul rdx, rax      ; rdx = rax * rax
+    cmp rdx, rcx       ; Compare x^2 with num1
+    ja .fraction_done  ; Stop when overshot
+
+    inc r8             ; Increment fractional counter
+    cmp r8, r9         ; Check if refined up to 0.9
+    jl .fractional_loop
+
+.fraction_done:
+    sub rax, 1         ; Undo last increment (overshoot)
+    mov rsi, r8        ; Fractional counter
+    call print_result_with_decimal
+    jmp exit
+
+.found_root:
+    ; Exact square root found
+    mov rax, r15
+    call print_result
+    jmp exit
+
+
+print_result_with_decimal:
+    ; Print integer part (rax)
+    call print_result
+
+    ; Print decimal point
+    mov byte [result], '.'
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, result
+    mov rdx, 1
+    syscall
+
+    ; Print fractional part (rsi = fractional counter)
+  add sil, '0'          ; Convert the fractional counter to ASCII
+mov byte [result], sil ; Store only the lowest byte into the result buffer
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, result
+    mov rdx, 1
+    syscall
+
+    ret
 
 addition:
     mov rbx, [num2]

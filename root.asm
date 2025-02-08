@@ -210,8 +210,8 @@ sqrt:       ;https://forum.nasm.us/index.php?topic=3901.0
 
     call print_result
 
-    cvtsi2ss xmm1, rax
-    subss xmm0, xmm1
+;    cvtsi2ss xmm1, rax
+ ;   subss xmm0, xmm1
 
     mov byte[result], '.'
     mov rax, 1
@@ -220,7 +220,7 @@ sqrt:       ;https://forum.nasm.us/index.php?topic=3901.0
     mov rdx, 1
     syscall
     
-    mov r10, 4
+    mov r10, 2
     .printDecimal:
         mulss xmm0, [ten]
         cvttss2si rax, xmm0
@@ -234,6 +234,7 @@ sqrt:       ;https://forum.nasm.us/index.php?topic=3901.0
         cmp r10, 0
         jnz .printDecimal
 
+mov byte  [result + 3], 0
     jmp exit
 
 ascii_to_int:

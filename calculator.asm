@@ -1,4 +1,6 @@
 ;Final calculator
+; Assemble with: nasm -felf64 calculator.asm -o calculator.o
+; Link with: ld calculator.o -o calculator
 
 section .data
     EXIT equ 60
@@ -15,70 +17,75 @@ section .data
     divide0String DB "You cannot divide by zero!", NEWLINE
     divide0Len equ $ - divide0String
     minusChar DB '-'
+    TEN equ 10
+    ONE  equ 1
+    TWENTY  equ 20
+    FIVE  equ 5
+    ZERO  equ 0
 
 section .bss
-    num1 resd 10
-    num2 resd 10
-    flush resb 1
-    operator resb 1
-    result resd 20
-    remainder resd 5
+    num1 resd TEN
+    num2 resd TEN
+    flush resb ONE
+    operator resb ONE
+    result resd TWENTY
+    remainder resd FIVE
     
 section .text
     global _start
     _start:
 
-        mov rax, 1
-        mov rdi, 1
+        mov rax, ONE
+        mov rdi, ONE
         mov rsi, InputString1
         mov rdx, stringLen1
         syscall
 
-        mov rax, 0
-        mov rdi, 0
+        mov rax, ZERO
+        mov rdi, ZERO
         mov rsi, num1
-        mov rdx, 10
+        mov rdx, TEN
         syscall
 
-        mov rax, 0
+        mov rax, ZERO
         mov rsi, num1
         call ascii_to_int
         mov [num1], rax
 
-        mov rax, 1
-        mov rdi, 1
+        mov rax, ONE
+        mov rdi, ONE
         mov rsi, InputString2
         mov rdx, stringLen2
         syscall
 
-        mov rax, 0
-        mov rdi, 0
+        mov rax, ZERO
+        mov rdi, ZERO
         mov rsi, num2
-        mov rdx, 10
+        mov rdx, TEN
         syscall
 
-        mov rax, 0
+        mov rax, ZERO
         mov rsi, num2
         call ascii_to_int
         mov [num2], rax
 
-        mov rax, 1
-        mov rdi, 1
+        mov rax, ONE
+        mov rdi, ONE
         mov rsi, operatorString
         mov rdx, operatorLen
         syscall
 
-        mov rax, 0
-        mov rdi, 0
+        mov rax, ZERO
+        mov rdi, ZERO
         mov rsi, operator
-        mov rdx, 1 
+        mov rdx, ONE
         syscall
 
 
-        mov rax, 0
-        mov rdi, 0
+        mov rax, ZERO
+        mov rdi, ZERO
         mov rsi, flush
-        mov rdx, 1
+        mov rdx, ONE
         syscall
 
         cmp byte[operator], '-'
@@ -118,10 +125,10 @@ substraction:
         mov [remainder], rbx    ;Reusing remainder but this is the result of the substraction
 
         mov byte[result], '-'
-        mov rax, 1
-        mov rdi, 1
+        mov rax, ONE
+        mov rdi, ONE
         mov rsi, result
-        mov rdx, 1
+        mov rdx, ONE
         syscall
 
         mov rax, rbx
@@ -158,17 +165,17 @@ division:
 
 .check:
     mov byte[result], '.'
-    mov rax, 1
-    mov rdi, 1
+    mov rax, ONE
+    mov rdi, ONE
     mov rsi, result
-    mov rdx, 1
+    mov rdx, ONE
     syscall
 
     xor r9, r9
     mov r9, 4
     .decimals:
         mov rax, [remainder]
-        mov rcx, 10
+        mov rcx, TEN
         mul rcx
         mov rbx, [num2]
         div rbx
@@ -193,7 +200,7 @@ ascii_to_int:
     cmp     bl, '-'         
     jne     .convert_digits ; If not '-', continue conversion as positive
     ; Found a '-', mark number as negative.
-    mov     r8, 1           
+    mov     r8, ONE         
     inc     rsi             ; Skip the '-' character
 
 .convert_digits:
@@ -218,10 +225,10 @@ ascii_to_int:
 ret
 
 print_result:
-    mov rbx, 10
+    mov rbx, TEN
     xor rsi, rsi
     xor r8, r8
-    cmp rax, 0
+    cmp rax, ZERO
     jge .reverse_loop
     call do_neg
     .reverse_loop:
@@ -237,10 +244,10 @@ print_result:
         pop rax
         mov [result], al
 
-        mov rax, 1
-        mov rdi, 1
+        mov rax, ONE
+        mov rdi, ONE
         mov rsi, result
-        mov rdx, 1
+        mov rdx, ONE
         syscall
         dec r8 
 
@@ -249,17 +256,17 @@ print_result:
         ret
 
 invalid_input:
-    mov rax, 1
-    mov rdi, 1
+    mov rax, ONE
+    mov rdi, ONE
     mov rsi, invalidString
     mov rdx, invalidLen
     syscall
 
     .flush:
-        mov rax, 1
-        mov rdi, 1
+        mov rax, ONE
+        mov rdi, ONE
         mov rsi, flush
-        mov rdx, 1
+        mov rdx, ONE
         syscall
         cmp byte[flush], NEWLINE
         jne .flush
@@ -267,8 +274,8 @@ invalid_input:
     jmp _start
 
 divide_0:
-    mov rax, 1 
-    mov rdi, 1
+    mov rax, ONE
+    mov rdi, ONE
     mov rsi, divide0String
     mov rdx, divide0Len
     syscall
@@ -277,10 +284,10 @@ divide_0:
 
 exit:
     mov byte[flush], NEWLINE 
-    mov rax, 1 
-    mov rdi, 1
+    mov rax, ONE
+    mov rdi, ONE
     mov rsi, flush
-    mov rdx, 1
+    mov rdx, ONE
     syscall
 
     mov rax, EXIT
@@ -295,13 +302,13 @@ do_neg:
     push rax             ; save original negative value
 
     ; Print the '-' character
-    mov     rax, 1       ; sys_write
-    mov     rdi, 1       ; stdout file descriptor
-    mov     rsi, minusChar  ; pointer to '-' character
-    mov     rdx, 1       ; length = 1
+    mov     rax, ONE      
+    mov     rdi, ONE       
+    mov     rsi, minusChar 
+    mov     rdx, ONE
     syscall
 
-    ; Restore the original value and convert it to positive
+    
     pop     rax          ; restore the negative value
     neg     rax          ; now rax is the positive equivalent
 
