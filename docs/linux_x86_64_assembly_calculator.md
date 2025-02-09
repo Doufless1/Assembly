@@ -71,7 +71,7 @@ git clone https://github.com/cyrus-and/gdb-dashboard.git
 mv gdb-dashboard ~/.gdb-dashboard
 echo "source ~/.gdb-dashboard/.gdbinit" >> ~/.gdbinit
 ```
-After you have done this u have a functional gdb Dashboard!
+After you have done ran this bash commands gdb dashboard should be working globally.
 Lastly if you want to compile your code and run with gdb you have to do this
 
 ```bash
@@ -110,7 +110,7 @@ section .data
 
     stringLen2              equ $ - InputString2 
 
-    operatorString          DB "Enter opetator (+ - * / ^ ~ e l)" 
+    operatorString          DB "Enter  (+ - * / ^ ~ e l)" 
 
     operatorLen             equ $ - operatorString 
 
@@ -181,7 +181,7 @@ section .data
 
  
 
-Fr the design of the calculator the most important thing is how the input is handled. The first step was to figure out how to output a message to the console. To do this you needed to have a set of register with certain values to indicate to print to the console. This is the general structure: 
+For the design of the calculator the most important thing is how the input is handled. The first step was to figure out how to output a message to the console. To do this you needed to have a set of register with certain values to indicate to print to the console. This is the general structure: 
 
 ```assembly
 
