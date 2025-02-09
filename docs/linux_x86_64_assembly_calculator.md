@@ -59,6 +59,35 @@ ld calculator.o -o calculator
 - You should get output like this ![Compilation Screenshot](https://raw.githubusercontent.com/Doufless1/Assembly/main/docs/pics/after_compiling.png)
 ---
 
+## GDB debugging
+
+Further you will need gdb to debug
+```bash
+sudo apt install gdb
+```
+After that we used some gdb extention called gdb dashboard
+```bash
+git clone https://github.com/cyrus-and/gdb-dashboard.git
+mv gdb-dashboard ~/.gdb-dashboard
+echo "source ~/.gdb-dashboard/.gdbinit" >> ~/.gdbinit
+```
+After you have done this u have a functional gdb Dashboard!
+Lastly if you want to compile your code and run with gdb you have to do this
+
+```bash
+nasm -f elf64 -g calculator.asm -o calculator.o
+ld calculator.o -o calculator
+gdb ./calculator
+```
+
+##Additional Notes
+If you want to use a breakpoint you can just type b <the_function_you_want>
+You run the program with run/r
+If there is a segmentation fault u can always use strace or backtrace
+To print some of the registers u can do x/10x $rsp (x is for hexadecimal d is for decimal c is for char)
+To print variables x/8x &<the name of the variagble> (also like said previous u can change the 8x to 8d for decimala nd 8c for char 8 its just for the bits).
+
+
 ## Coding Concepts  
 
 ### Variable Declaration  
