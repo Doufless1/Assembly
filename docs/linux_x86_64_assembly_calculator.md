@@ -455,6 +455,31 @@ sqrt:
     sqrtss xmm0, xmm0      ; Compute square root
     cvttss2si rax, xmm0    ; Convert back to integer
 ```
+Most of the implementations are pretty simple, except two, division and exponentiation. We are going to break down a bit more these two functions and the logic behind them.
+
+### Division
+We will start with the division function. For using division we will use 'idiv' command which is unsigned division, the quotient will be stored in [rax] and the remainder in [rdx] if there is one, otherwise it will be 0. For the sign we use a xor between [num1_sign] and [num2_sign], where the result is stored in [result_sign]. If there is no remainder, the function is simple enough, we will simply print the result, but if there is remainder it gets a little complicated.
+
+We will jump to .print_remainder, save the remainder and print the quotient first, next we print the dot for the remainder. After this a very important and simple step, turn the [result_sign] to 0, if you do not do this it will impact the printing of the decimals, printing negative signs when it should not.
+
+If both numbers are positive we will simply enter the loop to turn the remainder into decimals and print them out one by one, with a maximum of six decimals. This amount of decimals can be changed by increasing or decreasing the initial value of [r9].
+
+Doing a lot of testing there are different things you need to do depending on what number is negative. First case: Negative denominator. In this case we have to negate [num2]. This is because in the loop num2 is used to divide to find the decimal value of the remainder, if this is negative it will impact the result and the printing.
+
+If the numerator is negative, the remainder will be negative as well, which will impact the printing of the decimals, so we negate the [remainder] to make sure this does not happen.
+
+The last case is both numerator and denominator are negative. In this case we have to negate both the [remainder] and [num2]. The reason for this is equal to each of them separately.
+
+### Exponentiation
+Now we will move on to exponentiation. For exponentiation we check first if [num2] is 0, since any number to the power of 0 is 0. Next we check if the value of [num2] negative, if it is we simply negate [num2], if it is not negative we simple move to check the base.
+
+If the base is negative, we check to see if the exponent ([num2]) is even or odd, if it is odd, we move into [result_sign] a 1, otherwise a 0. This is to check is the result will be negative or not. Next up is the loop.
+
+The loop is simple, the numbers are loaded into registers and we multiply [num1] against itself as many times as [num2] indicates. After this is done, we check to see if [num2_sign] is 1, if it is we go to prepare the reciprocal. If not we simply print the answer.
+
+If we need to prepare the reciprocal, we overwrite [num1] with 1, move the resulting number from the loop, which is in rax, into [num2]. This is because we are going to reuse the division function. We also set [num1_sign] to 0, since it doesn't impact the sign of the result. We have to check if the result from the loop is negative, if it is we set [num2_sign] to 1 and call division. If it is not negative, then we set [num2_sign] to 0 and call division.
+
+This is how this two functions work, we choose to explain this two since they can be the most confusing ones and it required a lot of testing to make sure the result was printed correctly with the correct sign.
 
 ---
 
