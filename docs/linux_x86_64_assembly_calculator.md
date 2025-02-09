@@ -56,7 +56,7 @@ nasm -f elf64 calculator.asm -o calculator.o
 ld calculator.o -o calculator
 ./calculator
 ```
-- You should get output like this ![Alt text](https://github.com/Doufless1/Assembly.git/main/docs/pics/after_compiling.png) 
+- You should get output like this ![Alt text](https://github.comraw.githubusercontent.com/Doufless1/Assembly.git/main/docs/pics/after_compiling.png) 
 ---
 
 ## Coding Concepts  
